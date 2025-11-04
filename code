@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BISC/CHEM 116 Grade Calculator</title>
+  <style>
+    body {
+      background: #fff;
+      color: #111;
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+    }
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      border: 1px solid #222;
+      padding: 24px;
+      border-radius: 12px;
+      background: #fff;
+    }
+    h1 { font-weight: normal; font-size: 2em; text-align: center; letter-spacing: 2px;}
+    h2 { font-weight: normal; color: #222; }
+    .section { margin: 32px 0 18px; }
+    label { display: block; margin-bottom: 8px;}
+    input, select {
+      border: 2px solid #111;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: #fff;
+      color: #111;
+      font-size: 1em;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button, .link-btn {
+      background: #111;
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      margin: 5px 5px 10px 0;
+      display: inline-block;
+      text-decoration: none;
+      text-align: center;
+    }
+    button:hover, .link-btn:hover { background: #333; }
+    .file-upload {
+      display: flex; align-items: center; gap: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+      background: #fff;
+    }
+    td, th {
+      border: 1px solid #111;
+      padding: 8px 2px;
+      text-align: center;
+    }
+    th {
+      background: #fafafa;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BISC/CHEM 116 Grade Calculator</h1>
+    <div class="section">
+      <h2>Evaluation & Grading</h2>
+      <table>
+        <thead><tr><th>Category</th><th>Weight (%)</th></tr></thead>
+        <tbody>
+          <tr><td>Exam 1 (Sept 26)</td><td>10</td></tr>
+          <tr><td>Exam 2 (Oct 24)</td><td>10</td></tr>
+          <tr><td>Exam 3 (Nov 21)</td><td>10</td></tr>
+          <tr><td>Final Exam (TBD)</td><td>25</td></tr>
+          <tr><td>PSETS (9 total)</td><td>10</td></tr>
+          <tr><td>Practice Problems</td><td>5</td></tr>
+          <tr><td>Participation</td><td>5</td></tr>
+          <tr><td>End-of-Term Presentation</td><td>5</td></tr>
+          <tr><td>Lab</td><td>20</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px;"><b>Total: 100%</b></p>
+    </div>
+
+    <div class="section">
+      <a class="link-btn" href="https://www.gradescope.com/login" target="_blank">Link Gradescope</a>
+      <a class="link-btn" href="https://sakai-login-url.example.com/" target="_blank">Link Sakai</a>
+      <small>Use these to log in; then download your grades as CSV and upload below.</small>
+    </div>
+    <div class="section">
+      <form id="csvForm">
+        <label>Import Grades (CSV from Gradescope/Sakai):</label>
+        <input type="file" id="gradesFile" accept=".csv" required>
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+    <div class="section">
+      <div id="assignmentList" style="display:none;">
+        <label>Assign Assignments to Categories:</label>
+        <table id="assignmentsTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Score</th>
+              <th>Max Score</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <button onclick="calculateGrade()">Calculate Grade</button>
+      <h2>Your Current Grade: <span id="finalGrade"></span></h2>
+    </div>
+  </div>
+
+<script>
+  const categories = [
+    { name: 'Exam 1', weight: 10 },
+    { name: 'Exam 2', weight: 10 },
+    { name: 'Exam 3', weight: 10 },
+    { name: 'Final Exam', weight: 25 },
+    { name: 'PSETS', weight: 10 },
+    { name: 'Practice Problems', weight: 5 },
+    { name: 'Participation', weight: 5 },
+    { name: 'End-of-Term Presentation', weight: 5 },
+    { name: 'Lab', weight: 20 }
+  ];
+  let assignments = [];
+
+  function parseCSV(text) {
+    let lines = text.trim().split('\n').filter(x=>x.length);
+    let header = lines[0].split(',');
+    let scoreIdx = header.findIndex(h => h.toLowerCase().includes('score'));
+    let maxIdx = header.findIndex(h => h.toLowerCase().includes('max'));
+    let nameIdx = header.findIndex(h => h.toLowerCase().includes('name'));
+    return lines.slice(1).map(r => {
+      let row = r.split(',');
+      return {
+        name: nameIdx>-1 ? row[nameIdx]:row[0],
+        score: parseFloat(row[scoreIdx]||row[1]),
+        max: parseFloat(row[maxIdx]||row[2]),
+        category: ''
+      };
+    });
+  }
+
+  document.getElementById('csvForm').onsubmit = function(e){
+    e.preventDefault();
+    let file = document.getElementById('gradesFile').files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(ev){
+      assignments = parseCSV(ev.target.result);
+      showAssignments();
+    };
+    reader.readAsText(file);
+  };
+
+  function showAssignments() {
+    const div = document.getElementById('assignmentList');
+    const table = document.getElementById('assignmentsTable');
+    table.tBodies[0].innerHTML = '';
+    assignments.forEach((a,i) => {
+      table.tBodies[0].innerHTML += `
+        <tr>
+          <td>${a.name}</td>
+          <td>${isNaN(a.score)?'':a.score}</td>
+          <td>${isNaN(a.max)?'':a.max}</td>
+          <td>
+            <select onchange="assignments[${i}].category=this.value">
+              <option value="">Select</option>
+              ${categories.map(cat => 
+                   `<option value="${cat.name}" ${a.category==cat.name?'selected':''}>${cat.name}</option>`
+                  ).join('')}
+            </select>
+          </td>
+        </tr>
+      `;
+    });
+    div.style.display='block';
+  }
+
+  window.addEventListener('mouseup', showAssignments);
+  window.addEventListener('keyup', showAssignments);
+
+  function calculateGrade() {
+    let grade = 0;
+    categories.forEach(cat => {
+      let items = assignments.filter(a=>a.category==cat.name);
+      let pct = 0;
+      if (items.length) {
+        let sumScore = items.reduce((s,a)=>s+a.score,0);
+        let sumMax = items.reduce((s,a)=>s+a.max,0);
+        pct = sumMax ? sumScore/sumMax : 0;
+      }
+      grade += pct * cat.weight;
+    });
+    document.getElementById('finalGrade').innerText =
+      (grade).toFixed(2) + "%";
+  }
+</script>
+</body>
+</html>
