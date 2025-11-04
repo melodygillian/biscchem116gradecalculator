@@ -9,20 +9,35 @@
   h1, h2 {text-align: center;}
   table {width: 100%; border-collapse: collapse; margin-top: 20px;}
   th, td {border: 1px solid #000; padding: 10px; text-align: left;}
-  input[type='number'] {width: 80px;}
   button {background: #000; color: #fff; border: none; padding: 10px 15px; cursor: pointer; margin: 5px; border-radius: 6px;}
   button:hover {opacity: 0.8;}
-  .btn-secondary {background: #fff; color: #000; border: 1px solid #000;}
+  textarea {width: 100%; height: 200px; border: 1px solid #000; border-radius: 8px; padding: 10px; font-family: monospace;}
   #results {margin-top: 30px; font-size: 18px; font-weight: bold;}
 </style>
 </head>
 <body>
   <h1>BISC/CHEM 116 Grade Calculator</h1>
-  <p>This tool estimates your overall grade using the official grading distribution for BISC/CHEM 116. You can import your data from Gradescope or Sakai (CSV export), or enter your scores manually.</p>
+  <p>Use this calculator to compute your current grade in BISC/CHEM 116. You can paste either your Gradescope or Sakai grade lists. Choose the source you want to use below.</p>
 
-  <div style="text-align:center; margin-top: 10px;">
-    <button id="linkGradescope">Link Gradescope</button>
-    <button id="linkSakai">Link Sakai</button>
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="showBox('gradescopeBox')">Paste Gradescope Data</button>
+    <button onclick="showBox('sakaiBox')">Paste Sakai Data</button>
+  </div>
+
+  <div id="gradescopeBox" style="display:none;">
+    <h2>Paste Gradescope Assignment List</h2>
+    <textarea id="gradescopeText" placeholder="Paste your copied Gradescope text here..."></textarea>
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="parseGradescopeText()">Parse Gradescope</button>
+    </div>
+  </div>
+
+  <div id="sakaiBox" style="display:none;">
+    <h2>Paste Sakai Grade Export</h2>
+    <textarea id="sakaiText" placeholder="Paste your copied Sakai grade table here..."></textarea>
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="parseSakaiText()">Parse Sakai</button>
+    </div>
   </div>
 
   <table id="gradeTable">
@@ -30,21 +45,17 @@
       <tr><th>Category</th><th>Weight (%)</th><th>Your % Score</th><th>Calculated Points</th></tr>
     </thead>
     <tbody>
-      <tr><td>Exam 1</td><td>10</td><td><input type="number" id="exam1" min="0" max="100" step="0.1"></td><td id="exam1_pts">—</td></tr>
-      <tr><td>Exam 2</td><td>10</td><td><input type="number" id="exam2" min="0" max="100" step="0.1"></td><td id="exam2_pts">—</td></tr>
-      <tr><td>Exam 3</td><td>10</td><td><input type="number" id="exam3" min="0" max="100" step="0.1"></td><td id="exam3_pts">—</td></tr>
-      <tr><td>Final Exam</td><td>25</td><td><input type="number" id="final" min="0" max="100" step="0.1"></td><td id="final_pts">—</td></tr>
-      <tr><td>PSETS (9 total)</td><td>10</td><td><input type="number" id="psets" min="0" max="100" step="0.1"></td><td id="psets_pts">—</td></tr>
-      <tr><td>Practice Problems</td><td>5</td><td><input type="number" id="practice" min="0" max="100" step="0.1"></td><td id="practice_pts">—</td></tr>
-      <tr><td>Participation</td><td>5</td><td><input type="number" id="participation" min="0" max="100" step="0.1"></td><td id="participation_pts">—</td></tr>
-      <tr><td>End-of-Term Presentation</td><td>5</td><td><input type="number" id="presentation" min="0" max="100" step="0.1"></td><td id="presentation_pts">—</td></tr>
-      <tr><td>Lab</td><td>20</td><td><input type="number" id="lab" min="0" max="100" step="0.1"></td><td id="lab_pts">—</td></tr>
+      <tr><td>Exam 1</td><td>10</td><td id="exam1">—</td><td id="exam1_pts">—</td></tr>
+      <tr><td>Exam 2</td><td>10</td><td id="exam2">—</td><td id="exam2_pts">—</td></tr>
+      <tr><td>Exam 3</td><td>10</td><td id="exam3">—</td><td id="exam3_pts">—</td></tr>
+      <tr><td>Final Exam</td><td>25</td><td id="final">—</td><td id="final_pts">—</td></tr>
+      <tr><td>PSETS (9 total)</td><td>10</td><td id="psets">—</td><td id="psets_pts">—</td></tr>
+      <tr><td>Practice Problems</td><td>5</td><td id="practice">—</td><td id="practice_pts">—</td></tr>
+      <tr><td>Participation</td><td>5</td><td id="participation">—</td><td id="participation_pts">—</td></tr>
+      <tr><td>End-of-Term Presentation</td><td>5</td><td id="presentation">—</td><td id="presentation_pts">—</td></tr>
+      <tr><td>Lab</td><td>20</td><td id="lab">—</td><td id="lab_pts">—</td></tr>
     </tbody>
   </table>
-
-  <div style="text-align:center; margin-top: 20px;">
-    <button onclick="calculateGrade()">Calculate Overall Grade</button>
-  </div>
 
   <div id="results"></div>
 
@@ -55,23 +66,74 @@
       presentation: 5, lab: 20
     };
 
-    function calculateGrade() {
-      let total = 0;
-      for (const key in weights) {
-        const val = parseFloat(document.getElementById(key).value) || 0;
-        const pts = (val * weights[key]) / 100;
-        total += pts;
-        document.getElementById(`${key}_pts`).textContent = pts.toFixed(2);
-      }
-      document.getElementById('results').textContent = `Current Overall Grade: ${total.toFixed(2)}%`;
+    function showBox(id) {
+      document.getElementById('gradescopeBox').style.display = 'none';
+      document.getElementById('sakaiBox').style.display = 'none';
+      document.getElementById(id).style.display = 'block';
     }
 
-    document.getElementById('linkGradescope').addEventListener('click',()=>{
-      alert('For privacy reasons, please manually export your Gradescope grades as CSV and upload them — direct linking requires institutional API access.');
-    });
-    document.getElementById('linkSakai').addEventListener('click',()=>{
-      alert('Please export your Sakai Gradebook as CSV — direct linking requires a backend server connection.');
-    });
+    function calculateTotals(categorized) {
+      let totalWeighted = 0;
+      for (const key in categorized) {
+        const arr = categorized[key];
+        if (arr.length === 0) continue;
+        const totalEarned = arr.reduce((a,b)=>a+b.earned,0);
+        const totalMax = arr.reduce((a,b)=>a+b.max,0);
+        const avg = totalMax>0 ? (totalEarned/totalMax)*100 : 0;
+        const points = (avg * weights[key])/100;
+        document.getElementById(key).textContent = avg.toFixed(2)+'%';
+        document.getElementById(key+'_pts').textContent = points.toFixed(2);
+        totalWeighted += points;
+      }
+      document.getElementById('results').textContent = `Current Overall Grade: ${totalWeighted.toFixed(2)}%`;
+    }
+
+    function parseGradescopeText() {
+      const text = document.getElementById('gradescopeText').value;
+      const lines = text.split(/\n+/);
+      const scores = [];
+      const regex = /(.*?)\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/;
+      for (const line of lines) {
+        const match = line.match(regex);
+        if (match) scores.push({ name: match[1].trim(), earned: parseFloat(match[2]), max: parseFloat(match[3]) });
+      }
+      if (!scores.length) return alert('No valid scores found in pasted Gradescope text.');
+      const categorized = classifyAssignments(scores);
+      calculateTotals(categorized);
+    }
+
+    function parseSakaiText() {
+      const text = document.getElementById('sakaiText').value;
+      const lines = text.split(/\n+/);
+      const scores = [];
+      const regex = /(.*?)\s+(\d+(?:\.\d+)?)/;
+      for (const line of lines) {
+        const match = line.match(regex);
+        if (match && !line.toLowerCase().includes('title')) {
+          scores.push({ name: match[1].trim(), earned: parseFloat(match[2]), max: 2 }); // assume 2pt labs unless otherwise specified
+        }
+      }
+      if (!scores.length) return alert('No valid scores found in pasted Sakai text.');
+      const categorized = classifyAssignments(scores);
+      calculateTotals(categorized);
+    }
+
+    function classifyAssignments(scores) {
+      const categorized = { exam1: [], exam2: [], exam3: [], final: [], psets: [], practice: [], participation: [], presentation: [], lab: [] };
+      for (const s of scores) {
+        const name = s.name.toLowerCase();
+        if (name.includes('exam 1')) categorized.exam1.push(s);
+        else if (name.includes('exam 2')) categorized.exam2.push(s);
+        else if (name.includes('exam 3')) categorized.exam3.push(s);
+        else if (name.includes('final')) categorized.final.push(s);
+        else if (name.includes('pset') || name.includes('problem set')) categorized.psets.push(s);
+        else if (name.includes('practice') || name.includes('class')) categorized.practice.push(s);
+        else if (name.includes('participation')) categorized.participation.push(s);
+        else if (name.includes('presentation')) categorized.presentation.push(s);
+        else if (name.includes('lab') || name.includes('quiz')) categorized.lab.push(s);
+      }
+      return categorized;
+    }
   </script>
 </body>
 </html>
