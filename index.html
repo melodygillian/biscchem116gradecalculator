@@ -11,16 +11,17 @@
   th, td {border: 1px solid #000; padding: 10px; text-align: left;}
   button {background: #000; color: #fff; border: none; padding: 10px 15px; cursor: pointer; margin: 5px; border-radius: 6px;}
   button:hover {opacity: 0.8;}
-  textarea, input[type='number'] {width: 100%; height: 200px; border: 1px solid #000; border-radius: 8px; padding: 10px; font-family: monospace;}
-  input[type='number'] {height: auto; width: 80px; text-align: right;}
+  textarea {width: 100%; height: 200px; border: 1px solid #000; border-radius: 8px; padding: 10px; font-family: monospace;}
   #results {margin-top: 30px; font-size: 18px; font-weight: bold;}
   #debug {border: 1px dashed #000; padding: 10px; margin-top: 20px; white-space: pre-wrap; font-family: monospace;}
   .glow {box-shadow: 0 0 20px 5px #4caf50;}
+  td[contenteditable="true"] {background-color: #f7f7f7; cursor: text;}
+  td[contenteditable="true"]:focus {outline: 2px solid #4caf50;}
 </style>
 </head>
 <body>
   <h1>BISC/CHEM 116 Grade Calculator</h1>
-  <p>Paste your Gradescope or Sakai text below and click the corresponding button to calculate your current course grade. You can also manually adjust grades in the table to see how future results may affect your total.</p>
+  <p>Paste your Gradescope or Sakai text below and click the corresponding button to calculate your current course grade. You can also click directly on the table to edit or simulate grades.</p>
 
   <div style="text-align:center; margin-top:10px;">
     <button id="showGradescope">Paste Gradescope Data</button>
@@ -45,18 +46,18 @@
 
   <table id="gradeTable">
     <thead>
-      <tr><th>Category</th><th>Weight (%)</th><th>Your % Score (editable)</th><th>Calculated Points</th></tr>
+      <tr><th>Category</th><th>Weight (%)</th><th>Your % Score (click to edit)</th><th>Calculated Points</th></tr>
     </thead>
     <tbody>
-      <tr><td>Exam 1</td><td>10</td><td><input type="number" id="exam1" min="0" max="100" step="0.1" placeholder="—"></td><td id="exam1_pts">—</td></tr>
-      <tr><td>Exam 2</td><td>10</td><td><input type="number" id="exam2" min="0" max="100" step="0.1" placeholder="—"></td><td id="exam2_pts">—</td></tr>
-      <tr><td>Exam 3</td><td>10</td><td><input type="number" id="exam3" min="0" max="100" step="0.1" placeholder="—"></td><td id="exam3_pts">—</td></tr>
-      <tr><td>Final Exam</td><td>25</td><td><input type="number" id="final" min="0" max="100" step="0.1" placeholder="—"></td><td id="final_pts">—</td></tr>
-      <tr><td>PSETS (9 total)</td><td>10</td><td><input type="number" id="psets" min="0" max="100" step="0.1" placeholder="—"></td><td id="psets_pts">—</td></tr>
-      <tr><td>Practice Problems</td><td>5</td><td><input type="number" id="practice" min="0" max="100" step="0.1" placeholder="—"></td><td id="practice_pts">—</td></tr>
-      <tr><td>Participation</td><td>5</td><td><input type="number" id="participation" min="0" max="100" step="0.1" placeholder="—"></td><td id="participation_pts">—</td></tr>
-      <tr><td>End-of-Term Presentation</td><td>5</td><td><input type="number" id="presentation" min="0" max="100" step="0.1" placeholder="—"></td><td id="presentation_pts">—</td></tr>
-      <tr><td>Lab</td><td>20</td><td><input type="number" id="lab" min="0" max="100" step="0.1" placeholder="—"></td><td id="lab_pts">—</td></tr>
+      <tr><td>Exam 1</td><td>10</td><td id="exam1" contenteditable="true">—</td><td id="exam1_pts">—</td></tr>
+      <tr><td>Exam 2</td><td>10</td><td id="exam2" contenteditable="true">—</td><td id="exam2_pts">—</td></tr>
+      <tr><td>Exam 3</td><td>10</td><td id="exam3" contenteditable="true">—</td><td id="exam3_pts">—</td></tr>
+      <tr><td>Final Exam</td><td>25</td><td id="final" contenteditable="true">—</td><td id="final_pts">—</td></tr>
+      <tr><td>PSETS (9 total)</td><td>10</td><td id="psets" contenteditable="true">—</td><td id="psets_pts">—</td></tr>
+      <tr><td>Practice Problems</td><td>5</td><td id="practice" contenteditable="true">—</td><td id="practice_pts">—</td></tr>
+      <tr><td>Participation</td><td>5</td><td id="participation" contenteditable="true">—</td><td id="participation_pts">—</td></tr>
+      <tr><td>End-of-Term Presentation</td><td>5</td><td id="presentation" contenteditable="true">—</td><td id="presentation_pts">—</td></tr>
+      <tr><td>Lab</td><td>20</td><td id="lab" contenteditable="true">—</td><td id="lab_pts">—</td></tr>
     </tbody>
   </table>
 
@@ -79,8 +80,31 @@
     document.getElementById('showGradescope').onclick = () => showBox('gradescopeBox');
     document.getElementById('showSakai').onclick = () => showBox('sakaiBox');
 
-    function logDebug(msg) {
-      document.getElementById('debug').textContent = msg;
+    function highlightGlow() {
+      const table = document.getElementById('gradeTable');
+      table.classList.add('glow');
+      setTimeout(() => table.classList.remove('glow'), 1500);
+    }
+
+    function calculateTotals(categorized = null) {
+      let totalWeighted = 0;
+      for (const key in weights) {
+        let avg = 0;
+        if (categorized && categorized[key] && categorized[key].length) {
+          const arr = categorized[key];
+          const totalEarned = arr.reduce((a,b)=>a+b.earned,0);
+          const totalMax = arr.reduce((a,b)=>a+b.max,0);
+          avg = totalMax>0 ? (totalEarned/totalMax)*100 : 0;
+          document.getElementById(key).textContent = avg.toFixed(2);
+        } else {
+          avg = parseFloat(document.getElementById(key).textContent) || 0;
+        }
+        const points = (avg * weights[key])/100;
+        document.getElementById(key+'_pts').textContent = points.toFixed(2);
+        totalWeighted += points;
+      }
+      document.getElementById('results').textContent = `Current Overall Grade: ${totalWeighted.toFixed(2)}%`;
+      highlightGlow();
     }
 
     function classifyAssignments(scores) {
@@ -100,80 +124,46 @@
       return categorized;
     }
 
-    function highlightGlow() {
-      const table = document.getElementById('gradeTable');
-      table.classList.add('glow');
-      setTimeout(() => table.classList.remove('glow'), 1500);
-    }
-
-    function calculateTotals(categorized = null) {
-      let totalWeighted = 0;
-      for (const key in weights) {
-        let avg = 0;
-        if (categorized && categorized[key] && categorized[key].length) {
-          const arr = categorized[key];
-          const totalEarned = arr.reduce((a,b)=>a+b.earned,0);
-          const totalMax = arr.reduce((a,b)=>a+b.max,0);
-          avg = totalMax>0 ? (totalEarned/totalMax)*100 : 0;
-          document.getElementById(key).value = avg.toFixed(2);
-        }
-        else {
-          avg = parseFloat(document.getElementById(key).value) || 0;
-        }
-        const points = (avg * weights[key])/100;
-        document.getElementById(key+'_pts').textContent = points.toFixed(2);
-        totalWeighted += points;
-      }
-      document.getElementById('results').textContent = `Current Overall Grade: ${totalWeighted.toFixed(2)}%`;
-      highlightGlow();
-    }
-
     function parseGradescope() {
-      try {
-        let text = document.getElementById('gradescopeText').value;
-        if (!text.trim()) return alert('Please paste your Gradescope text first.');
-
-        text = text.replace(/\n(?=\d+\.?\d*\s*\/\s*\d+)/g, ' ');
-        const lines = text.split(/\n+/);
-        const scores = [];
-        const regex = /(.*?)\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match) scores.push({ name: match[1].trim(), earned: parseFloat(match[2]), max: parseFloat(match[3]) });
-        }
-        if (!scores.length) return logDebug('No scores found. Make sure text includes lines like "4.0 / 4.0".');
-        const categorized = classifyAssignments(scores);
-        calculateTotals(categorized);
-      } catch (e) { logDebug('Error parsing Gradescope data: ' + e.message); }
+      let text = document.getElementById('gradescopeText').value;
+      if (!text.trim()) return alert('Please paste your Gradescope text first.');
+      text = text.replace(/\n(?=\d+\.?\d*\s*\/\s*\d+)/g, ' ');
+      const lines = text.split(/\n+/);
+      const scores = [];
+      const regex = /(.*?)\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/;
+      for (const line of lines) {
+        const match = line.match(regex);
+        if (match) scores.push({ name: match[1].trim(), earned: parseFloat(match[2]), max: parseFloat(match[3]) });
+      }
+      if (!scores.length) return alert('No scores found. Make sure text includes lines like "4.0 / 4.0".');
+      const categorized = classifyAssignments(scores);
+      calculateTotals(categorized);
     }
 
     function parseSakai() {
-      try {
-        let text = document.getElementById('sakaiText').value;
-        if (!text.trim()) return alert('Please paste your Sakai text first.');
-
-        const lines = text.split(/\n+/);
-        const scores = [];
-        const regex = /(.*?)\s+(\d+(?:\.\d+)?)/;
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (match && !line.toLowerCase().includes('title')) {
-            const earned = parseFloat(match[2]);
-            const max = earned <= 2 ? 2 : 10;
-            scores.push({ name: match[1].trim(), earned, max });
-          }
+      let text = document.getElementById('sakaiText').value;
+      if (!text.trim()) return alert('Please paste your Sakai text first.');
+      const lines = text.split(/\n+/);
+      const scores = [];
+      const regex = /(.*?)\s+(\d+(?:\.\d+)?)/;
+      for (const line of lines) {
+        const match = line.match(regex);
+        if (match && !line.toLowerCase().includes('title')) {
+          const earned = parseFloat(match[2]);
+          const max = earned <= 2 ? 2 : 10;
+          scores.push({ name: match[1].trim(), earned, max });
         }
-        if (!scores.length) return logDebug('No valid scores found. Ensure you copied entire Sakai grade list.');
-        const categorized = classifyAssignments(scores);
-        calculateTotals(categorized);
-      } catch (e) { logDebug('Error parsing Sakai data: ' + e.message); }
+      }
+      if (!scores.length) return alert('No valid scores found. Ensure you copied entire Sakai grade list.');
+      const categorized = classifyAssignments(scores);
+      calculateTotals(categorized);
     }
 
     document.getElementById('parseGradescopeBtn').onclick = parseGradescope;
     document.getElementById('parseSakaiBtn').onclick = parseSakai;
 
-    document.querySelectorAll("input[type='number']").forEach(input => {
-      input.addEventListener('input', () => calculateTotals());
+    document.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+      cell.addEventListener('input', () => calculateTotals());
     });
   </script>
 </body>
