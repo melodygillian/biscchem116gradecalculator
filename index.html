@@ -147,14 +147,26 @@
       const scores = [];
       const regex = /(.*?)\s+(\d+(?:\.\d+)?)/;
       for (const line of lines) {
-        const match = line.match(regex);
-        if (match && !line.toLowerCase().includes('title')) {
-          let cleanedLine = match[2].toString().replace(/[^0-9.]/g, '');
-          const earned = parseFloat(cleanedLine);
-          const max = (line.includes('(Highest)') || earned > 2) ? 10 : 2;
-          scores.push({ name: match[1].trim(), earned, max });
-        }
-      }
+          const match = line.match(/^(.*?)\s+([0-9]+(?:\.[0-9]+)?)/);
+          if (match && !line.toLowerCase().includes('title')) {
+            // Remove any text like "(Highest)" and "n/a"
+            const name = match[1].trim();
+            let cleaned = match[2].toString().replace(/[^0-9.]/g, '');
+            const earned = parseFloat(cleaned);
+
+          // Smarter max detection
+          let max = 2;
+          if (line.toLowerCase().includes('(highest)') || earned > 2) {
+            max = 10;
+    }
+
+    // Skip duplicates or placeholder rows
+    if (!isNaN(earned)) {
+      scores.push({ name, earned, max });
+    }
+  }
+}
+
       if (!scores.length) return alert('No valid scores found. Ensure you copied entire Sakai grade list.');
       const categorized = classifyAssignments(scores);
       calculateTotals(categorized);
