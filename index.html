@@ -149,8 +149,9 @@
       for (const line of lines) {
         const match = line.match(regex);
         if (match && !line.toLowerCase().includes('title')) {
-          const earned = parseFloat(match[2]);
-          const max = earned <= 2 ? 2 : 10;
+          let cleanedLine = match[2].toString().replace(/[^0-9.]/g, '');
+          const earned = parseFloat(cleanedLine);
+          const max = (line.includes('(Highest)') || earned > 2) ? 10 : 2;
           scores.push({ name: match[1].trim(), earned, max });
         }
       }
