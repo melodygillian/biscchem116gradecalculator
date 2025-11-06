@@ -152,7 +152,7 @@ for(let line of lines){
   if(lower.includes('title')||lower.includes('statistics')) continue;
   line = line.replace(/n\/a|Highest|,/gi,'').trim();
   const nums = line.match(/\d+(?:\.\d+)?/g);
-  if(!nums||!nums.length) continue;
+  if(!nums || !nums.length) continue;
   const earned = parseFloat(nums[nums.length-1]);
   if(isNaN(earned)) continue;
   const name = line.trim();
@@ -164,8 +164,6 @@ for(let line of lines){
   }
   scores.push({name, earned, max});
 }
-
-
 
   if(!scores.length){
     alert('No valid Sakai grades found.');
