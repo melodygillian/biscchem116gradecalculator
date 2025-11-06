@@ -152,7 +152,10 @@
           const nameLower = name.toLowerCase();
           let cleaned = match[2].toString().replace(/[^0-9.]/g, '');
           const earned = parseFloat(cleaned);
-          const max = (nameLower.includes('safety') && nameLower.includes('quiz')) ? 10 : 2; // ONLY Safety Quiz out of 10, everything else out of 2
+      
+          // ✅ Only the Safety Quiz is out of 10; everything else out of 2
+          const max = (nameLower.includes('safety') && nameLower.includes('quiz')) ? 10 : 2;
+      
           if (!isNaN(earned)) scores.push({ name, earned, max });
         }
       }
