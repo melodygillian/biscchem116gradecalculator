@@ -153,12 +153,14 @@ function parseSakai() {
     if (lower.includes('title') || lower.includes('statistics')) continue;
 
     // 🔹 remove time stamps (like "8:00 PM") and dates (like "Nov 10, 2025")
-    line = line
-      .replace(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/gi, '')
-      .replace(/\d{1,2}:\d{2}\s*(am|pm)?/gi, '')
-      .replace(/\d{4}/g, '') // remove year like 2025
-      .replace(/n\/a|highest|,/gi, '')
-      .trim();
+   line = line
+    .replace(/Lab\s*#?\d+/gi, 'Lab')        // remove "Lab 7" or "Lab #3"
+    .replace(/Assignment\s*#?\d+/gi, 'Assignment') // remove "Assignment #5"
+    .replace(/\b\d{1,2}:\d{2}\s*(am|pm)?/gi, '')   // remove "8:00 PM"
+    .replace(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/gi, '') // remove month names
+    .replace(/\d{4}/g, '')                  // remove "2025"
+    .replace(/n\/a|highest|,/gi, '')
+    .trim();
 
     // get numeric scores
     const nums = line.match(/\b\d+(?:\.\d+)?\b/g);
