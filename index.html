@@ -146,23 +146,32 @@ function parseSakai(){
   const scores=[];
 
   for(let line of lines){
-    const lower=line.toLowerCase();
-    if(!(lower.startsWith('lab')||lower.startsWith('safety')))continue;
-    if(lower.includes('title')||lower.includes('statistics'))continue;
+  const lower = line.toLowerCase();
+  if(!(lower.startsWith('lab')||lower.startsWith('safety'))) continue;
+  if(lower.includes('title')||lower.includes('statistics')) continue;
 
-    // clean up
-    line=line.replace(/n\/a|Highest|,/gi,'').trim();
+  // clean up
+  line = line.replace(/n\/a|Highest|,/gi,'').trim();
 
-    // pick last number
-    const nums=line.match(/\d+(?:\.\d+)?/g);
-    if(!nums||!nums.length)continue;
-    const earned=parseFloat(nums[nums.length-1]);
-    if(isNaN(earned))continue;
+  // pick last number
+  const nums = line.match(/\d+(?:\.\d+)?/g);
+  if(!nums||!nums.length) continue;
+  const earned = parseFloat(nums[nums.length-1]);
+  if(isNaN(earned)) continue;
 
-    const name=line.trim();
-    const max=(lower.includes('safety')&&lower.includes('quiz'))?10:2;
-    scores.push({name,earned,max});
+  const name = line.trim();
+
+  // NEW: Set max according to your rule
+  let max;
+  if(lower.includes("safety") && lower.includes("quiz")) {
+    max = 10;
+  } else {
+    max = 2;
   }
+
+  scores.push({name, earned, max});
+}
+
 
   if(!scores.length){
     alert('No valid Sakai grades found.');
