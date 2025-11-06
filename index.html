@@ -5,191 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BISC/CHEM 116 Grade Calculator</title>
 <style>
-  body {font-family: Arial, sans-serif; background: #fff; color: #000; margin: 0; padding: 20px;}
-  h1, h2 {text-align: center;}
-  table {width: 100%; border-collapse: collapse; margin-top: 20px; transition: box-shadow 0.6s ease;}
-  th, td {border: 1px solid #000; padding: 10px; text-align: left;}
-  button {background: #000; color: #fff; border: none; padding: 10px 15px; cursor: pointer; margin: 5px; border-radius: 6px;}
-  button:hover {opacity: 0.8;}
-  textarea {width: 100%; height: 200px; border: 1px solid #000; border-radius: 8px; padding: 10px; font-family: monospace;}
-  #results {margin-top: 30px; font-size: 18px; font-weight: bold;}
-  #debug {border: 1px dashed #000; padding: 10px; margin-top: 20px; white-space: pre-wrap; font-family: monospace;}
-  .glow {box-shadow: 0 0 20px 5px #4caf50;}
-  td[contenteditable="true"] {background-color: #f7f7f7; cursor: text;}
-  td[contenteditable="true"]:focus {outline: 2px solid #4caf50;}
+  body {font-family: Arial, sans-serif; background:#fff; color:#000; margin:0; padding:20px;}
+  h1,h2{text-align:center;}
+  table{width:100%;border-collapse:collapse;margin-top:20px;transition:box-shadow .6s ease;}
+  th,td{border:1px solid #000;padding:10px;text-align:left;}
+  button{background:#000;color:#fff;border:none;padding:10px 15px;cursor:pointer;margin:5px;border-radius:6px;}
+  button:hover{opacity:.8;}
+  textarea{width:100%;height:200px;border:1px solid #000;border-radius:8px;padding:10px;font-family:monospace;}
+  #results{margin-top:30px;font-size:18px;font-weight:bold;}
+  .glow{box-shadow:0 0 20px 5px #4caf50;}
+  td[contenteditable="true"]{background:#f7f7f7;cursor:text;}
+  td[contenteditable="true"]:focus{outline:2px solid #4caf50;}
 </style>
 </head>
 <body>
-  <h1>BISC/CHEM 116 Grade Calculator</h1>
-  <p>Go to your Gradescope or Sakai grade page, Select All + Copy, then paste the text below and click the matching button. You can also click directly on the table to edit/simulate grades.</p>
+<h1>BISC/CHEM 116 Grade Calculator</h1>
+<p>Copy everything from Sakai or Gradescope, paste below, and click the right button. You can also click directly on the table to simulate grades.</p>
 
-  <div style="text-align:center; margin-top:10px;">
-    <button id="showGradescope">Paste Gradescope Data</button>
-    <button id="showSakai">Paste Sakai Data</button>
+<div style="text-align:center;margin-top:10px;">
+  <button id="showGradescope">Paste Gradescope Data</button>
+  <button id="showSakai">Paste Sakai Data</button>
+</div>
+
+<div id="gradescopeBox" style="display:none;">
+  <h2>Gradescope Data</h2>
+  <textarea id="gradescopeText" placeholder="Paste Gradescope text here..."></textarea>
+  <div style="text-align:center;margin-top:10px;">
+    <button id="parseGradescopeBtn">Parse Gradescope</button>
   </div>
+</div>
 
-  <div id="gradescopeBox" style="display:none;">
-    <h2>Gradescope Data</h2>
-    <textarea id="gradescopeText" placeholder="Paste your copied Gradescope text here..."></textarea>
-    <div style="text-align:center; margin-top:10px;">
-      <button id="parseGradescopeBtn">Parse Gradescope</button>
-    </div>
+<div id="sakaiBox" style="display:none;">
+  <h2>Sakai Data</h2>
+  <textarea id="sakaiText" placeholder="Paste Sakai grade table here..."></textarea>
+  <div style="text-align:center;margin-top:10px;">
+    <button id="parseSakaiBtn">Parse Sakai</button>
   </div>
+</div>
 
-  <div id="sakaiBox" style="display:none;">
-    <h2>Sakai Data</h2>
-    <textarea id="sakaiText" placeholder="Paste your copied Sakai grade table here..."></textarea>
-    <div style="text-align:center; margin-top:10px;">
-      <button id="parseSakaiBtn">Parse Sakai</button>
-    </div>
-  </div>
+<table id="gradeTable">
+  <thead>
+    <tr><th>Category</th><th>Weight (%)</th><th>Your % Score (click to edit)</th><th>Calculated Points</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Exam 1</td><td>10</td><td id="exam1" contenteditable="true">—</td><td id="exam1_pts">—</td></tr>
+    <tr><td>Exam 2</td><td>10</td><td id="exam2" contenteditable="true">—</td><td id="exam2_pts">—</td></tr>
+    <tr><td>Exam 3</td><td>10</td><td id="exam3" contenteditable="true">—</td><td id="exam3_pts">—</td></tr>
+    <tr><td>Final Exam</td><td>25</td><td id="final" contenteditable="true">—</td><td id="final_pts">—</td></tr>
+    <tr><td>PSETS (9 total)</td><td>10</td><td id="psets" contenteditable="true">—</td><td id="psets_pts">—</td></tr>
+    <tr><td>Practice Problems</td><td>5</td><td id="practice" contenteditable="true">—</td><td id="practice_pts">—</td></tr>
+    <tr><td>Participation</td><td>5</td><td id="participation" contenteditable="true">—</td><td id="participation_pts">—</td></tr>
+    <tr><td>End-of-Term Presentation</td><td>5</td><td id="presentation" contenteditable="true">—</td><td id="presentation_pts">—</td></tr>
+    <tr><td>Lab</td><td>20</td><td id="lab" contenteditable="true">—</td><td id="lab_pts">—</td></tr>
+  </tbody>
+</table>
 
-  <table id="gradeTable">
-    <thead>
-      <tr><th>Category</th><th>Weight (%)</th><th>Your % Score (click to edit)</th><th>Calculated Points</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Exam 1</td><td>10</td><td id="exam1" contenteditable="true">—</td><td id="exam1_pts">—</td></tr>
-      <tr><td>Exam 2</td><td>10</td><td id="exam2" contenteditable="true">—</td><td id="exam2_pts">—</td></tr>
-      <tr><td>Exam 3</td><td>10</td><td id="exam3" contenteditable="true">—</td><td id="exam3_pts">—</td></tr>
-      <tr><td>Final Exam</td><td>25</td><td id="final" contenteditable="true">—</td><td id="final_pts">—</td></tr>
-      <tr><td>PSETS (9 total)</td><td>10</td><td id="psets" contenteditable="true">—</td><td id="psets_pts">—</td></tr>
-      <tr><td>Practice Problems</td><td>5</td><td id="practice" contenteditable="true">—</td><td id="practice_pts">—</td></tr>
-      <tr><td>Participation</td><td>5</td><td id="participation" contenteditable="true">—</td><td id="participation_pts">—</td></tr>
-      <tr><td>End-of-Term Presentation</td><td>5</td><td id="presentation" contenteditable="true">—</td><td id="presentation_pts">—</td></tr>
-      <tr><td>Lab</td><td>20</td><td id="lab" contenteditable="true">—</td><td id="lab_pts">—</td></tr>
-    </tbody>
-  </table>
+<div id="results"></div>
 
-  <div id="results"></div>
-  <div id="debug"></div>
-
-  <script>
-    const weights = {
-      exam1: 10, exam2: 10, exam3: 10, final: 25,
-      psets: 10, practice: 5, participation: 5,
-      presentation: 5, lab: 20
-    };
-
-    function showBox(id) {
-      document.getElementById('gradescopeBox').style.display = 'none';
-      document.getElementById('sakaiBox').style.display = 'none';
-      document.getElementById(id).style.display = 'block';
-    }
-
-    document.getElementById('showGradescope').onclick = () => showBox('gradescopeBox');
-    document.getElementById('showSakai').onclick = () => showBox('sakaiBox');
-
-    function highlightGlow() {
-      const table = document.getElementById('gradeTable');
-      table.classList.add('glow');
-      setTimeout(() => table.classList.remove('glow'), 1500);
-    }
-
-    function calculateTotals(categorized = null) {
-      let totalWeighted = 0;
-      for (const key in weights) {
-        let avg = 0;
-        if (categorized && categorized[key] && categorized[key].length) {
-          const arr = categorized[key];
-          const totalEarned = arr.reduce((a,b)=>a+b.earned,0);
-          const totalMax = arr.reduce((a,b)=>a+b.max,0);
-          avg = totalMax > 0 ? (totalEarned / totalMax) * 100 : 0;
-          document.getElementById(key).textContent = avg.toFixed(2);
-        } else {
-          avg = parseFloat(document.getElementById(key).textContent) || 0;
-        }
-        const points = (avg * weights[key]) / 100;
-        document.getElementById(key + '_pts').textContent = points.toFixed(2);
-        totalWeighted += points;
-      }
-      document.getElementById('results').textContent = `Current Overall Grade: ${totalWeighted.toFixed(2)}%`;
-      highlightGlow();
-    }
-
-    function classifyAssignments(scores) {
-      const categorized = { exam1: [], exam2: [], exam3: [], final: [], psets: [], practice: [], participation: [], presentation: [], lab: [] };
-      for (const s of scores) {
-        const name = s.name.toLowerCase();
-        if (name.includes('exam 1')) categorized.exam1.push(s);
-        else if (name.includes('exam 2')) categorized.exam2.push(s);
-        else if (name.includes('exam 3')) categorized.exam3.push(s);
-        else if (name.includes('final')) categorized.final.push(s);
-        else if (name.includes('pset') || name.includes('problem set')) categorized.psets.push(s);
-        else if (name.includes('practice') || name.includes('class')) categorized.practice.push(s);
-        else if (name.includes('participation')) categorized.participation.push(s);
-        else if (name.includes('presentation')) categorized.presentation.push(s);
-        else if (name.includes('lab') || name.includes('quiz')) categorized.lab.push(s);
-      }
-      return categorized;
-    }
-
-    function parseGradescope() {
-      let text = document.getElementById('gradescopeText').value;
-      if (!text.trim()) return alert('Please paste your Gradescope text first.');
-      // Join lines where the score is on the next line (e.g., "Name\n4.0 / 4.0")
-      text = text.replace(/\n(?=\d+\.?\d*\s*\/\s*\d+)/g, ' ');
-      const lines = text.split(/\n+/);
-      const scores = [];
-      const regex = /(.*?)\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/;
-      for (const line of lines) {
-        const match = line.match(regex);
-        if (match) scores.push({ name: match[1].trim(), earned: parseFloat(match[2]), max: parseFloat(match[3]) });
-      }
-      if (!scores.length) return alert('No scores found. Make sure text includes lines like "4.0 / 4.0".');
-      const categorized = classifyAssignments(scores);
-      calculateTotals(categorized);
-    }
-
-    function parseSakai() {
-  let text = document.getElementById('sakaiText').value;
-  if (!text.trim()) return alert('Please paste your Sakai text first.');
-
-  // Focus only on the grade section between "Title" and "Gateway"
-  const gradeSectionMatch = text.match(/Title[\\s\\S]*?Gateway/);
-  const gradeSection = gradeSectionMatch ? gradeSectionMatch[0] : text;
-
-  const lines = gradeSection.split(/\n+/);
-  const scores = [];
-
-  for (const line of lines) {
-    // Skip headers, blank lines, and non-grade rows
-    if (!line.toLowerCase().match(/lab|quiz/)) continue;
-    if (line.toLowerCase().includes('title') || line.toLowerCase().includes('statistics')) continue;
-
-    // Find all numeric values in the line
-    const nums = line.match(/[0-9]+(?:\.[0-9]+)?/g);
-    if (!nums || !nums.length) continue;
-    const earned = parseFloat(nums[nums.length - 1]);
-    if (isNaN(earned)) continue;
-
-    const name = line.trim();
-    const lower = name.toLowerCase();
-
-    // ✅ Only “Safety Quiz” is out of 10, everything else /2
-    const max = (lower.includes('safety') && lower.includes('quiz')) ? 10 : 2;
-
-    scores.push({ name, earned, max });
+<script>
+const weights={exam1:10,exam2:10,exam3:10,final:25,psets:10,practice:5,participation:5,presentation:5,lab:20};
+function showBox(id){document.getElementById('gradescopeBox').style.display='none';document.getElementById('sakaiBox').style.display='none';document.getElementById(id).style.display='block';}
+document.getElementById('showGradescope').onclick=()=>showBox('gradescopeBox');
+document.getElementById('showSakai').onclick=()=>showBox('sakaiBox');
+function highlightGlow(){const t=document.getElementById('gradeTable');t.classList.add('glow');setTimeout(()=>t.classList.remove('glow'),1500);}
+function calculateTotals(categorized=null){let totalWeighted=0;for(const key in weights){let avg=0;if(categorized&&categorized[key]&&categorized[key].length){const arr=categorized[key];const totalEarned=arr.reduce((a,b)=>a+b.earned,0);const totalMax=arr.reduce((a,b)=>a+b.max,0);avg=totalMax>0?(totalEarned/totalMax)*100:0;document.getElementById(key).textContent=avg.toFixed(2);}else{avg=parseFloat(document.getElementById(key).textContent)||0;}const pts=(avg*weights[key])/100;document.getElementById(key+'_pts').textContent=pts.toFixed(2);totalWeighted+=pts;}document.getElementById('results').textContent=`Current Overall Grade: ${totalWeighted.toFixed(2)}%`;highlightGlow();}
+function classifyAssignments(scores){const c={exam1:[],exam2:[],exam3:[],final:[],psets:[],practice:[],participation:[],presentation:[],lab:[]};for(const s of scores){const n=s.name.toLowerCase();if(n.includes('exam 1'))c.exam1.push(s);else if(n.includes('exam 2'))c.exam2.push(s);else if(n.includes('exam 3'))c.exam3.push(s);else if(n.includes('final'))c.final.push(s);else if(n.includes('pset')||n.includes('problem set'))c.psets.push(s);else if(n.includes('practice')||n.includes('class'))c.practice.push(s);else if(n.includes('participation'))c.participation.push(s);else if(n.includes('presentation'))c.presentation.push(s);else if(n.includes('lab')||n.includes('quiz'))c.lab.push(s);}return c;}
+function parseGradescope(){let t=document.getElementById('gradescopeText').value;if(!t.trim())return alert('Paste Gradescope text first.');t=t.replace(/\n(?=\d+\.?\d*\s*\/\s*\d+)/g,' ');const lines=t.split(/\n+/);const scores=[];const r=/(.*?)\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/;for(const l of lines){const m=l.match(r);if(m)scores.push({name:m[1].trim(),earned:parseFloat(m[2]),max:parseFloat(m[3])});}if(!scores.length)return alert('No scores found.');const cat=classifyAssignments(scores);calculateTotals(cat);}
+function parseSakai(){
+  let text=document.getElementById('sakaiText').value;
+  if(!text.trim())return alert('Please paste your Sakai text first.');
+  // ✅ Correct regex – single backslash, not escaped
+  const sectionMatch=text.match(/Title[\s\S]*?Gateway/);
+  const section=sectionMatch?sectionMatch[0]:text;
+  const lines=section.split(/\n+/);
+  const scores=[];
+  for(const line of lines){
+    const lower=line.toLowerCase();
+    if(!lower.match(/lab|quiz/))continue;
+    if(lower.includes('title')||lower.includes('statistics'))continue;
+    const nums=line.match(/[0-9]+(?:\.[0-9]+)?/g);
+    if(!nums)continue;
+    const earned=parseFloat(nums[nums.length-1]);
+    if(isNaN(earned))continue;
+    const name=line.trim();
+    const max=(lower.includes('safety')&&lower.includes('quiz'))?10:2;
+    scores.push({name,earned,max});
   }
-
-  if (!scores.length) {
-    alert('No valid Sakai grades found. Make sure your pasted text includes the "Title | Statistics | Recorded Score" section.');
-    return;
-  }
-
-  const categorized = classifyAssignments(scores);
-  calculateTotals(categorized);
+  if(!scores.length)return alert('No valid Sakai grades found.');
+  const cat=classifyAssignments(scores);
+  calculateTotals(cat);
 }
-
-
-
-    document.getElementById('parseGradescopeBtn').onclick = parseGradescope;
-    document.getElementById('parseSakaiBtn').onclick = parseSakai;
-
-    // Live what-if editing
-    document.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-      cell.addEventListener('input', () => calculateTotals());
-    });
-  </script>
+document.getElementById('parseGradescopeBtn').onclick=parseGradescope;
+document.getElementById('parseSakaiBtn').onclick=parseSakai;
+document.querySelectorAll('[contenteditable="true"]').forEach(c=>c.addEventListener('input',()=>calculateTotals()));
+</script>
 </body>
 </html>
