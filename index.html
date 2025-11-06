@@ -139,7 +139,7 @@ function parseSakai() {
   let text = document.getElementById('sakaiText').value;
   if (!text.trim()) return alert('Please paste your Sakai text first.');
 
-  // Extract only the "Title ... Gateway" region
+  // Extract the section between Title and Gateway
   const match = text.match(/Title[\s\S]*?(?=Gateway|Accessibility Information|The Sakai Project)/i);
   const section = match ? match[0] : text;
   const lines = section.split(/\n+/);
@@ -148,28 +148,26 @@ function parseSakai() {
   for (let line of lines) {
     const lower = line.toLowerCase();
 
-    // ✅ Must contain "lab" or "safety", and at least one number AFTER "n/a"
+    // must have lab or safety and not header
     if (!(lower.startsWith('lab') || lower.includes('safety'))) continue;
     if (lower.includes('title') || lower.includes('statistics')) continue;
 
-    // remove n/a, Highest, commas, etc.
-    line = line.replace(/n\/a|highest|,/gi, '').trim();
+    // 🔹 remove time stamps (like "8:00 PM") and dates (like "Nov 10, 2025")
+    line = line
+      .replace(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/gi, '')
+      .replace(/\d{1,2}:\d{2}\s*(am|pm)?/gi, '')
+      .replace(/\d{4}/g, '') // remove year like 2025
+      .replace(/n\/a|highest|,/gi, '')
+      .trim();
 
-    // ✅ Grab all numbers but ignore if they look like dates (e.g. "2025" or a month day)
-    // ✅ Grab all numbers but ignore times (like "8:00") and large values
-    const nums = (line.match(/\b\d+(?:\.\d+)?\b/g) || [])
-      .filter(n => !/:\d/.test(line))   // ignore times like 8:00
-      .map(n => parseFloat(n))
-      .filter(n => n > 0 && n <= 10);   // keep only real grade-size numbers
+    // get numeric scores
+    const nums = line.match(/\b\d+(?:\.\d+)?\b/g);
+    if (!nums) continue;
 
+    const earned = parseFloat(nums[nums.length - 1]);
+    if (isNaN(earned)) continue;
 
-    if (!nums.length) continue;
-
-    // Take the last numeric value — the actual recorded score
-    const earned = nums[nums.length - 1];
-    if (isNaN(earned) || earned === 0) continue;
-
-    // ✅ Safety Quiz = /10, everything else = /2
+    // Safety Quiz = /10, everything else /2
     const max = (lower.includes('safety') && lower.includes('quiz')) ? 10 : 2;
 
     scores.push({ name: line.trim(), earned, max });
@@ -183,6 +181,7 @@ function parseSakai() {
   const cat = classifyAssignments(scores);
   calculateTotals(cat);
 }
+
 
 
 document.addEventListener('DOMContentLoaded',()=>{
