@@ -21,7 +21,7 @@
 </head>
 <body>
   <h1>BISC/CHEM 116 Grade Calculator</h1>
-  <p>Go to your Gradescope or Sakai grade page, command A to select all and command C to copy, then come back and command V to paste the text below and click the corresponding button to calculate your current course grade. You can also click directly on the table to edit or simulate grades.
+  <p>Go to your Gradescope or Sakai grade page, Select All + Copy, then paste the text below and click the matching button. You can also click directly on the table to edit/simulate grades.</p>
 
   <div style="text-align:center; margin-top:10px;">
     <button id="showGradescope">Paste Gradescope Data</button>
@@ -94,13 +94,13 @@
           const arr = categorized[key];
           const totalEarned = arr.reduce((a,b)=>a+b.earned,0);
           const totalMax = arr.reduce((a,b)=>a+b.max,0);
-          avg = totalMax>0 ? (totalEarned/totalMax)*100 : 0;
+          avg = totalMax > 0 ? (totalEarned / totalMax) * 100 : 0;
           document.getElementById(key).textContent = avg.toFixed(2);
         } else {
           avg = parseFloat(document.getElementById(key).textContent) || 0;
         }
-        const points = (avg * weights[key])/100;
-        document.getElementById(key+'_pts').textContent = points.toFixed(2);
+        const points = (avg * weights[key]) / 100;
+        document.getElementById(key + '_pts').textContent = points.toFixed(2);
         totalWeighted += points;
       }
       document.getElementById('results').textContent = `Current Overall Grade: ${totalWeighted.toFixed(2)}%`;
@@ -127,6 +127,7 @@
     function parseGradescope() {
       let text = document.getElementById('gradescopeText').value;
       if (!text.trim()) return alert('Please paste your Gradescope text first.');
+      // Join lines where the score is on the next line (e.g., "Name\n4.0 / 4.0")
       text = text.replace(/\n(?=\d+\.?\d*\s*\/\s*\d+)/g, ' ');
       const lines = text.split(/\n+/);
       const scores = [];
@@ -145,20 +146,25 @@
       if (!text.trim()) return alert('Please paste your Sakai text first.');
       const lines = text.split(/\n+/);
       const scores = [];
+
       for (const line of lines) {
-        const match = line.match(/^(.*?)\s+([0-9]+(?:\.[0-9]+)?)/);
-        if (match && !line.toLowerCase().includes('title')) {
-          const name = match[1].trim();
-          const nameLower = name.toLowerCase();
-          let cleaned = match[2].toString().replace(/[^0-9.]/g, '');
-          const earned = parseFloat(cleaned);
-      
-          // ✅ Only the Safety Quiz is out of 10; everything else out of 2
-          const max = (nameLower.includes('safety') && nameLower.includes('quiz')) ? 10 : 2;
-      
-          if (!isNaN(earned)) scores.push({ name, earned, max });
-        }
+        if (line.toLowerCase().includes('title')) continue;
+
+        // Grab the LAST numeric token on the line (avoids matching the "#3" in "Lab #3 ...")
+        const nums = line.match(/[0-9]+(?:\.[0-9]+)?/g);
+        if (!nums || !nums.length) continue;
+        const lastNum = parseFloat(nums[nums.length - 1]);
+        if (isNaN(lastNum)) continue;
+
+        const name = line.split(/\t+/)[0].trim() || line.trim();
+        const lower = name.toLowerCase();
+
+        // Only Safety Quiz is /10; all other labs are /2
+        const max = (lower.includes('safety') && lower.includes('quiz')) ? 10 : 2;
+
+        scores.push({ name, earned: lastNum, max });
       }
+
       if (!scores.length) return alert('No valid scores found. Ensure you copied the entire Sakai grade list.');
       const categorized = classifyAssignments(scores);
       calculateTotals(categorized);
@@ -167,6 +173,7 @@
     document.getElementById('parseGradescopeBtn').onclick = parseGradescope;
     document.getElementById('parseSakaiBtn').onclick = parseSakai;
 
+    // Live what-if editing
     document.querySelectorAll('[contenteditable="true"]').forEach(cell => {
       cell.addEventListener('input', () => calculateTotals());
     });
