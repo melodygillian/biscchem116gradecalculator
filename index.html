@@ -75,7 +75,9 @@ function parseSakai() {
   let text = document.getElementById("sakaiText").value;
   if (!text.trim()) return alert("Please paste your Sakai text first.");
 
-  // focus on grade section
+  // clear old results first
+  document.querySelectorAll('#gradeTable td[id]').forEach(td => td.textContent = '—');
+
   const match = text.match(/Title[\s\S]*?(?=Gateway|Accessibility Information|The Sakai Project)/i);
   const section = match ? match[0] : text;
   const lines = section.split(/\n+/);
@@ -87,31 +89,21 @@ function parseSakai() {
     if (lower.includes("title") || lower.includes("statistics")) continue;
     if (!line.includes("n/a")) continue;
 
-    // only grab the number after n/a, ignore dates
     const after = line.split(/n\/a/i)[1];
     const clean = after.replace(/highest|immediate|am|pm|,|oct|nov|dec|sep|aug|jul|jun|may|apr|mar|feb|jan|\d{4}/gi, "").trim();
-
-    // find the last valid numeric value <= 10 (ignores “8:00 PM” etc)
     const nums = (clean.match(/\b\d+(?:\.\d+)?\b/g) || []).map(n => parseFloat(n)).filter(n => n <= 10);
     if (!nums.length) continue;
     const earned = nums[nums.length - 1];
     if (isNaN(earned)) continue;
-
-    // skip if it has no actual score (e.g., “Lab #8 ... Nov 10 ...”)
-    if (lower.includes("pm") || lower.includes("am") || line.match(/due/i)) continue;
-
     const max = (lower.includes("safety") && lower.includes("quiz")) ? 10 : 2;
     scores.push({ name: line.trim(), earned, max });
   }
 
-  if (!scores.length) {
-    alert("No valid Sakai grades found.");
-    return;
-  }
-
+  if (!scores.length) return alert("No valid Sakai grades found.");
   const cat = classifyAssignments(scores);
   calculateTotals(cat);
 }
+
 
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('parseGradescopeBtn').addEventListener('click',parseGradescope);
